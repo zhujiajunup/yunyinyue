@@ -1,6 +1,6 @@
 /*
 Package encrypt provides encrypt algorithm such as rsa & aes
- */
+*/
 package encrypt
 
 import (
@@ -10,7 +10,19 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"math/rand"
+	"time"
 )
+
+func Random(size int) (result []byte) {
+	s := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	strBytes := []byte(s)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < size; i++ {
+		result = append(result, strBytes[r.Intn(len(strBytes))])
+	}
+	return
+}
 
 func PKCS5UnPadding(origData []byte) []byte {
 	length := len(origData)
@@ -73,4 +85,3 @@ func AesDecrypt(crypted, key []byte) ([]byte, error) {
 	origData = PKCS5UnPadding(origData)
 	return origData, nil
 }
-

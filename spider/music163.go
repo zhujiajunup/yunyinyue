@@ -1,6 +1,6 @@
 /*
 Package spider provides Music163Spider to crawl song/user comments from https://music.163.com
- */
+*/
 package spider
 
 import (
@@ -14,7 +14,9 @@ import (
 	"strings"
 	"yunyinyue/spider/constants"
 	"yunyinyue/spider/encrypt"
-	"yunyinyue/spider/entity"
+	"yunyinyue/spider/entity/common"
+	"yunyinyue/spider/entity/request"
+	"yunyinyue/spider/entity/response"
 )
 
 type Music163Spider struct {
@@ -41,50 +43,70 @@ func NewMusic164Spider() (spider Music163Spider) {
 	}
 }
 
-func (spider Music163Spider) GetUserInfo(userId string){
+func (spider Music163Spider) GetUserInfo(userId string) {
 
 }
 
-func (spider Music163Spider) GetTopListen(userId string){
-
+func (spider Music163Spider) GetPlayRecord(userId string) (record response.PlayRecordResp, err error) {
+	playRecordReqBody := request.PlayRecordRequestBody{
+		Uid:  userId,
+		Type: "-1",
+		BaseRequestBody: request.BaseRequestBody{
+			Offset:    "0",
+			Total:     "true",
+			Limit:     "1000",
+			CsrfToken: "",
+		},
+	}
+	playRecordUrl := fmt.Sprintf("%s%s%s?csrf_token=", constants.HttpsPrefix, constants.Music163Host, constants.PlayRecord)
+	result, err := spider.httpPost(playRecordUrl, spider.headers, playRecordReqBody)
+	if err != nil {
+		return
+	}
+	playRecordResp := response.PlayRecordResp{}
+	json.Unmarshal([]byte(result), &playRecordResp)
+	return playRecordResp, nil
 }
+func (spider Music163Spider) GetComments(songId string) (comments []common.Comment, err error) {
 
-func (spider Music163Spider) GetComments(songId string) (comments []entity.Comment, err error) {
-
-	commentReqBody := entity.CommentRequestBody{
-		Rid:       "R_SO_4_" + songId,
-		Offset:    "0",
-		Totail:    "true",
-		Limit:     "20",
-		CsrfToken: "",
+	commentReqBody := request.CommentRequestBody{
+		Rid: "R_SO_4_" + songId,
+		BaseRequestBody: request.BaseRequestBody{
+			Offset:    "0",
+			Total:     "true",
+			Limit:     "20",
+			CsrfToken: "",
+		},
 	}
 	commentUrl := fmt.Sprintf("%s%s%s/R_SO_4_%s?csrf_token=", constants.HttpsPrefix, constants.Music163Host, constants.CommentApi, songId)
-	content, err := spider.httpPost(commentUrl, spider.headers, commentReqBody)
+	result, err := spider.httpPost(commentUrl, spider.headers, commentReqBody)
+	commentResp := response.CommentResp{}
+	json.Unmarshal([]byte(result), &commentResp)
 
-	comments = make([]entity.Comment, 0)
-	for i := 0; i < len(content.Comments); i ++ {
-		comments = append(comments, content.Comments[i])
+	comments = make([]common.Comment, 0)
+	for i := 0; i < len(commentResp.Comments); i++ {
+		comments = append(comments, commentResp.Comments[i])
 	}
 	if err != nil {
 		return
 	}
-	totalPage := int(math.Ceil(float64(content.Total / 20)))
-	for curr := 1; curr < totalPage; curr ++ {
+	totalPage := int(math.Ceil(float64(commentResp.Total / 20)))
+	for curr := 1; curr < totalPage; curr++ {
 		commentReqBody.Offset = strconv.Itoa(curr)
-		commentReqBody.Totail = "false"
-		content, err := spider.httpPost(commentUrl, spider.headers, commentReqBody)
+		commentReqBody.Total = "false"
+		result, err := spider.httpPost(commentUrl, spider.headers, commentReqBody)
 		if err != nil {
 			return comments, err
 		}
-		for i := 0; i < len(content.Comments); i ++ {
-			comments = append(comments, content.Comments[i])
+		json.Unmarshal([]byte(result), &commentResp)
+		for i := 0; i < len(commentResp.Comments); i++ {
+			comments = append(comments, commentResp.Comments[i])
 		}
-		fmt.Printf("commentCount: %d\t%s\n", len(content.Comments), content.Comments)
+		fmt.Printf("commentCount: %d\t%s\n", len(commentResp.Comments), commentResp.Comments)
 		if curr == 10 {
 			break
 		}
 	}
-
 	return comments, err
 }
 
@@ -108,28 +130,28 @@ func (spider Music163Spider) dataEncrypt(dataBytes []byte) (content map[string]s
 	return content
 }
 
-func (spider Music163Spider) httpPost(url string, headers map[string]string, params interface{}) (commentResp entity.CommentResp, err error) {
+func (spider Music163Spider) httpPost(url string, headers map[string]string, params interface{}) (result []byte, err error) {
 	body := make(url2.Values)
 	jsonParams, err := json.Marshal(params)
 	if err != nil {
-		return entity.CommentResp{}, err
+		return nil, err
 	}
 	encryptResultMap := spider.dataEncrypt(jsonParams)
 	body["params"] = []string{encryptResultMap["params"]}
 	body["encSecKey"] = []string{encryptResultMap["encSecKey"]}
-	request, err := http.NewRequest("POST", url, strings.NewReader(body.Encode()))
+	req, err := http.NewRequest("POST", url, strings.NewReader(body.Encode()))
 	for key, value := range headers {
-		request.Header.Add(key, value)
+		req.Header.Add(key, value)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
-	resp, err := spider.client.Do(request)
+	resp, err := spider.client.Do(req)
 	defer resp.Body.Close()
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return nil, err
 	}
-	json.Unmarshal([]byte(data), &commentResp)
-	return
+
+	return data, nil
 }

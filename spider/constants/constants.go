@@ -1,6 +1,6 @@
 /*
 constants used by this project
- */
+*/
 package constants
 
 const (
@@ -11,4 +11,5 @@ const (
 	Music163Host = "music.163.com"
 	HttpsPrefix  = "https://"
 	CommentApi   = "/weapi/v1/resource/comments"
+	PlayRecord   = "/weapi/v1/play/record"
 )
