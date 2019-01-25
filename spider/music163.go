@@ -112,7 +112,7 @@ func (spider Music163Spider) GetComments(songId string) (comments []common.Comme
 
 func (spider Music163Spider) dataEncrypt(dataBytes []byte) (content map[string]string) {
 	content = make(map[string]string)
-	randomBytes := encrypt.Random(16)
+	randomBytes := encrypt.RandomStr(16)
 	params, err := encrypt.AesEncrypt(string(dataBytes), constants.SrcretKey, constants.AseKey)
 	if err != nil {
 		fmt.Println(err)

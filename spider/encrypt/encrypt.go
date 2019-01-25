@@ -14,7 +14,8 @@ import (
 	"time"
 )
 
-func Random(size int) (result []byte) {
+// generate string for given size
+func RandomStr(size int) (result []byte) {
 	s := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	strBytes := []byte(s)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -22,12 +23,6 @@ func Random(size int) (result []byte) {
 		result = append(result, strBytes[r.Intn(len(strBytes))])
 	}
 	return
-}
-
-func PKCS5UnPadding(origData []byte) []byte {
-	length := len(origData)
-	unpadding := int(origData[length-1])
-	return origData[:(length - unpadding)]
 }
 
 func AesEncrypt(sSrc string, sKey string, aseKey string) (string, error) {
@@ -61,6 +56,7 @@ func RsaEncrypt(key string, pubKey string, modulus string) string {
 	hexRs := fmt.Sprintf("%x", bigRs)
 	return addPadding(hexRs, modulus)
 }
+
 func addPadding(encText string, modulus string) string {
 	ml := len(modulus)
 	for i := 0; ml > 0 && modulus[i:i+1] == "0"; i++ {
@@ -72,16 +68,4 @@ func addPadding(encText string, modulus string) string {
 		prefix += "0"
 	}
 	return prefix + encText
-}
-func AesDecrypt(crypted, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	blockSize := block.BlockSize()
-	blockMode := cipher.NewCBCDecrypter(block, key[:blockSize])
-	origData := make([]byte, len(crypted))
-	blockMode.CryptBlocks(origData, crypted)
-	origData = PKCS5UnPadding(origData)
-	return origData, nil
 }
