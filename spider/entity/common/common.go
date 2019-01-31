@@ -6,22 +6,23 @@ type Comment struct {
 	User    YunyinyueUser `json:"user"`
 	Time    uint64        `json:"time"`
 	Content string        `json:"content"`
+	SongId  string        `json:"-"`
 }
 
 type YunyinyueUser struct {
-	LocationInfo string `json:"locationInfo"`
-	ExpertTags   string `json:"expertTags"`
-	AvatarUrl    string `json:"avatarUrl"`
-	UserId       int32  `json:"userId"`
-	Nickname     string `json:"nickname"`
-	UserType     int    `json:"userType"`
+	LocationInfo string `json:"locationInfo" db:"location_info"`
+	ExpertTags   string `json:"expertTags" db:"expert_tags"`
+	AvatarUrl    string `json:"avatarUrl" db:"avatar_url"`
+	UserId       int32  `json:"userId" db:"user_id"`
+	Nickname     string `json:"nickname" db:"nickname"`
+	UserType     int    `json:"userType" db:"user_type"`
 }
 
 type Artist struct {
-	Id        int    `json:"id"`
-	Name      string `json:"name"`
-	Alias     string `json:"alias"`
-	AliasName string `json:"aliasName"`
+	Id        int    `json:"id" db:"id"`
+	Name      string `json:"name" db:"name"`
+	Alias     string `json:"alias" db:"alias"`
+	AliasName string `json:"aliasName" db:"alias_name"`
 }
 
 type Album struct {
@@ -33,9 +34,9 @@ type Album struct {
 }
 
 type Song struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	Artist Artist `json:"artist"`
+	Id     string `json:"id" db:"id"`
+	Name   string `json:"name" db:"name"`
+	Artist Artist `json:"artist" `
 	Album  Album  `json:"album"`
 }
 

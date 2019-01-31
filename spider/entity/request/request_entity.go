@@ -2,7 +2,7 @@ package request
 
 type BaseRequestBody struct {
 	Offset    string `json:"offset"`
-	Total     string `json:"totail"`
+	Total     string `json:"total"`
 	Limit     string `json:"limit"`
 	CsrfToken string `json:"csrf_token"`
 }

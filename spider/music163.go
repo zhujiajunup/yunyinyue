@@ -92,22 +92,28 @@ func (spider Music163Spider) GetComments(songId string) (comments []common.Comme
 	}
 	totalPage := int(math.Ceil(float64(commentResp.Total / 20)))
 	for curr := 1; curr < totalPage; curr++ {
-		commentReqBody.Offset = strconv.Itoa(curr)
+		commentReqBody.Offset = strconv.Itoa(curr * 20)
 		commentReqBody.Total = "false"
 		result, err := spider.httpPost(commentUrl, spider.headers, commentReqBody)
 		if err != nil {
 			return comments, err
 		}
 		json.Unmarshal([]byte(result), &commentResp)
-		for i := 0; i < len(commentResp.Comments); i++ {
-			comments = append(comments, commentResp.Comments[i])
+		for _, c := range commentResp.Comments {
+			fmt.Println(c)
 		}
-		fmt.Printf("commentCount: %d\t%s\n", len(commentResp.Comments), commentResp.Comments)
+		comments = append(comments, commentResp.Comments...)
 		if curr == 10 {
 			break
 		}
 	}
-	return comments, err
+	coms := make([]common.Comment, 0, len(comments))
+	for _, comment := range comments {
+		c := &comment
+		c.SongId = songId
+		coms = append(coms, comment)
+	}
+	return coms, err
 }
 
 func (spider Music163Spider) dataEncrypt(dataBytes []byte) (content map[string]string) {
